@@ -1,0 +1,153 @@
+In this chapter, we will present the optimal control formulation of the GAN deep learning algorithm composed by two residual neural networks (x).
+There is a resNet generator $G$ which takes input from a fake distribution $p_z$ and transforms it to another probability distribution $p_g$. The resNet discriminator $D$ aims to discriminate whether the data comes from the true distribution $p_x$ or the generated distribution. Given enough capacity and training time, we expect the generated distribution $p_g$ to approximate the true data distribution $p_x$.
+Following the formulation of the Background \ref{chp-Background}, we idealize the feed-forward dynamics to be a differential equation instead of the difference equation and study it in continuous time. The following graph shows a general idea of the process of points in the algorithm.\\
+
+\begin{figure}
+    \centering
+    \caption{Process of Points in the Algorithm}
+    \label{fig:Algorithm}
+
+
+\tikzset{every picture/.style={line width=0.75pt}} %set default line width to 0.75pt        
+
+\begin{tikzpicture}[x=0.75pt,y=0.75pt,yscale=-1,xscale=1]
+%uncomment if require: \path (0,300); %set diagram left start at 0, and has height of 300
+
+%Straight Lines [id:da9541727437666336] 
+\draw    (140,150) -- (218,150) ;
+\draw [shift={(220,150)}, rotate = 180] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.75]    (10.93,-3.29) .. controls (6.95,-1.4) and (3.31,-0.3) .. (0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+%Straight Lines [id:da01994201011667074] 
+\draw    (350,150) -- (428,150) ;
+\draw [shift={(430,150)}, rotate = 180] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.75]    (10.93,-3.29) .. controls (6.95,-1.4) and (3.31,-0.3) .. (0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+%Straight Lines [id:da5733666864555824] 
+\draw    (350,90) -- (428,90) ;
+\draw [shift={(430,90)}, rotate = 180] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.75]    (10.93,-3.29) .. controls (6.95,-1.4) and (3.31,-0.3) .. (0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+%Straight Lines [id:da38846972538993896] 
+\draw    (450,200) -- (450,52) ;
+\draw [shift={(450,50)}, rotate = 90] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.75]    (10.93,-3.29) .. controls (6.95,-1.4) and (3.31,-0.3) .. (0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+%Straight Lines [id:da14427513184773222] 
+\draw    (450,90) -- (528,90) ;
+\draw [shift={(530,90)}, rotate = 180] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.75]    (10.93,-3.29) .. controls (6.95,-1.4) and (3.31,-0.3) .. (0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+%Straight Lines [id:da6707974468987419] 
+\draw    (450,150) -- (528,150) ;
+\draw [shift={(530,150)}, rotate = 180] [color={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.75]    (10.93,-3.29) .. controls (6.95,-1.4) and (3.31,-0.3) .. (0,0) .. controls (3.31,0.3) and (6.95,1.4) .. (10.93,3.29)   ;
+
+% Text Node
+\draw (239,78) node [anchor=north west][inner sep=0.75pt]   [align=left] {$\displaystyle p_{x} \ni x \in \mathbb{R}^{d}$};
+% Text Node
+\draw (50,138) node [anchor=north west][inner sep=0.75pt]   [align=left] {$\displaystyle p_{z} \ni z \in \mathbb{R}^{d}$};
+% Text Node
+\draw (174,130) node [anchor=north west][inner sep=0.75pt]   [align=left] {$\displaystyle G$};
+% Text Node
+\draw (231,138) node [anchor=north west][inner sep=0.75pt]   [align=left] {$\displaystyle p_{g} \ni G(z) \in \mathbb{R}^{d}$};
+% Text Node
+\draw (381,70) node [anchor=north west][inner sep=0.75pt]   [align=left] {$\displaystyle D$};
+% Text Node
+\draw (381,130) node [anchor=north west][inner sep=0.75pt]   [align=left] {$\displaystyle D$};
+% Text Node
+\draw (451,192) node [anchor=north west][inner sep=0.75pt]   [align=left] {0};
+% Text Node
+\draw (452,53) node [anchor=north west][inner sep=0.75pt]   [align=left] {1};
+% Text Node
+\draw (477,69) node [anchor=north west][inner sep=0.75pt]   [align=left] {$\displaystyle \Phi _{1}$};
+% Text Node
+\draw (477,152) node [anchor=north west][inner sep=0.75pt]   [align=left] {$\displaystyle \Phi _{2}$};
+% Text Node
+\draw (543,80) node [anchor=north west][inner sep=0.75pt]   [align=left] {$\displaystyle \mathbb{R}$};
+% Text Node
+\draw (543,140) node [anchor=north west][inner sep=0.75pt]   [align=left] {$\displaystyle \mathbb{R}$};
+\end{tikzpicture}
+\end{figure}
+\begin{definition}
+We stack the true data sample $x$ and the fake one $z$ as a single input $X$ drawn from the joint distribution $\mu$. $$X_0 := (x_0,z_0)^T \sim \mu = (p_x, p_z)^T, \quad X_t := (x_t, z_t)$$ where $x,z \in \R^d, X_t \in \R^{2d}$, $p_x$ is the distribution of true data and $p_z$ is the distribution of fake input.
+\end{definition}
+\begin{definition}
+Define the loss function as $$\Phi(X) := \Phi(x,z) =
+\Phi_1(h(x))+\Phi_2(h(z))$$
+where $h : \R^d \mapsto (0,1)$ is a preset reduction function that reduces the dimension of data on $\R^d$ (e.g. a sigmoid function)\\
+$\Phi_1: (0,1) \mapsto \R$ is an increasing function and in the typical setting $\Phi_1(x) = \log (x)$\\
+$\Phi_2: (0,1) \mapsto \R$ is an decreasing function and in the typical setting $\Phi_2(h(x)) = \log (1-x)$\\
+\end{definition}
+
+Assume $g, f$ to be the feed-forward rule for the generator of layer $T_1$ and the discriminator of layer $T_2$ respectively. Then $$\begin{aligned}\dot z_t &= g(z_t, \theta_t^G) \quad \; 0<t<T_1, \quad  \; g: \R^d \times \Theta^G \mapsto \R^d \\
+\dot x_t &= f(x_t, \theta_t^G) \quad T_1 \leq t\leq T_2, \quad f: \R^d \times \Theta^D \mapsto \R^d\end{aligned}$$
+We concatenate the parameters in each resNet $\theta_t^G \in \Theta^G, \theta_t^D \in \Theta^D$ to define $$\theta_t := (\theta_t^G, \theta_t^D)^T \in \Theta .$$Then we can write the dynamics of the system as: $$
+\begin{cases}
+\dot X_t = F_t(X_t,\theta_t)\\
+X(0)=X_0 = (x_0,z_0)^T
+\end{cases} $$
+$\text{where } F_t(X_t,\theta_t) = \begin{cases}
+\left(0,g(z_t,\theta_t^G)\right)^T\quad & 0 \leq t < T_1\\
+\left(f(x_t,\theta_t^D),f(z_t,\theta_t^D)\right)^T \quad & T_1 \leq t\leq T_2
+\end{cases}$\\
+\newline
+\newtheorem*{GANP}{Problem}
+\begin{GANP}
+Given the terminal loss function $\Phi$, the running cost / regularization function $L: \R^{2d} \times \Theta \mapsto \R$ and the distribution $\mu$, if we write the terminal time as $T_1 +T_2 = T$we want to find the optimal for the following minimax problem:
+$$J(t,\mu,\theta) = \min _{\theta \in L^{\infty}([0,T_1) \times \Theta)}\max _{\theta \in L^{\infty}([T_1,T_2] \times \Theta)} \mathbb{E}_{X \sim \mu} \left[ \Phi(X_{T}) + \int_{t}^{T}L(X_s, \theta_s) ds \right]$$
+\end{GANP}
+\begin{figure}[h]
+    \centering
+    \caption{Formulation}
+    \label{fig:formulation}
+
+\tikzset{every picture/.style={line width=0.75pt}} %set default line width to 0.75pt        
+
+\begin{tikzpicture}[x=0.75pt,y=0.75pt,yscale=-1,xscale=1]
+% uncomment if require: \path (0,304); %set diagram left start at 0, and has height of 304
+
+%Straight Lines [id:da2479968066331757] 
+\draw    (124,62) -- (434,62) ;
+%Straight Lines [id:da017946360404593742] 
+\draw    (124,124) -- (434,124) ;
+%Straight Lines [id:da880427676184993] 
+\draw    (124,186) -- (434,186) ;
+%Straight Lines [id:da6856342714765045] 
+\draw    (310,52) -- (310,62) ;
+%Straight Lines [id:da05497611162570837] 
+\draw    (310,112) -- (310,122) ;
+%Straight Lines [id:da23395560550359495] 
+\draw    (310,176) -- (310,186) ;
+%Straight Lines [id:da6720830322100912] 
+\draw    (434,52) -- (434,62) ;
+%Straight Lines [id:da5432225176736356] 
+\draw    (434,114) -- (434,124) ;
+%Straight Lines [id:da4580430937416522] 
+\draw    (434,176) -- (434,186) ;
+
+% Text Node
+\draw (126,65) node [anchor=north west][inner sep=0.75pt]   [align=left] {0};
+% Text Node
+\draw (125,188) node [anchor=north west][inner sep=0.75pt]   [align=left] {0};
+% Text Node
+\draw (126,127) node [anchor=north west][inner sep=0.75pt]   [align=left] {0};
+% Text Node
+\draw (210,102) node [anchor=north west][inner sep=0.75pt]   [align=left] {$\displaystyle \theta _{t}^{G}$};
+% Text Node
+\draw (364,163) node [anchor=north west][inner sep=0.75pt]   [align=left] {$\displaystyle \theta _{t}^{D}$};
+% Text Node
+\draw (366,105) node [anchor=north west][inner sep=0.75pt]   [align=left] {0};
+% Text Node
+\draw (213,167) node [anchor=north west][inner sep=0.75pt]   [align=left] {0};
+% Text Node
+\draw (187,43) node [anchor=north west][inner sep=0.75pt]   [align=left] {Generator};
+% Text Node
+\draw (331,43) node [anchor=north west][inner sep=0.75pt]   [align=left] {Discriminator};
+% Text Node
+\draw (300,127) node [anchor=north west][inner sep=0.75pt]   [align=left] {$\displaystyle T_{1}$};
+% Text Node
+\draw (299,188) node [anchor=north west][inner sep=0.75pt]   [align=left] {$\displaystyle T_{1}$};
+% Text Node
+\draw (299,64) node [anchor=north west][inner sep=0.75pt]   [align=left] {$\displaystyle T_{1}$};
+% Text Node
+\draw (427,64) node [anchor=north west][inner sep=0.75pt]   [align=left] {$\displaystyle T_{2}$};
+% Text Node
+\draw (425,126) node [anchor=north west][inner sep=0.75pt]   [align=left] {$\displaystyle T_{2}$};
+% Text Node
+\draw (426,188) node [anchor=north west][inner sep=0.75pt]   [align=left] {$\displaystyle T_{2}$};
+\end{tikzpicture}
+\end{figure}
+
+The Figure \ref{fig:formulation} shows clearly how $\theta_t$ is used to compute the outputs. The idea is to keep the true data constant when processed through the generator and fix the change to the fake data when processed through the discriminator. Note that there are two ways of formulating this: one way is to directly set the evolution of the upper part in $0 \leq t < T_1$ to be $0$ (as specified in the above differential equations) but the lack of uniformity may cause difficulties in further solving the problem; The other way requires an assumption on the generator feed-forward function. If there exists a constant $c (=0$ in the below graph) such that $g(z_t, c) = 0, \; \forall z_t \in \R^d$. Then instead of programming the dynamics, we can restrict the control space to enforce the feed-forward rule being 0 on $[0,T_1)$ for true data points.
+
+

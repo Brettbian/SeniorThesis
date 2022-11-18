@@ -1,0 +1,104 @@
+This chapter will include the foundation to proceed to the next chapter, the mean field optimal control formulation of resNets GAN. We will introduce several important concepts including the optimal control formulation of resNet, the algorithm of GAN and the mean field optimal control theory.
+
+\section{GANs}
+In this thesis, we focus on the theoretical formulation of GANs and this section we introduce the algorithm of GANs, first proposed by Ian J. Goodfellow \cite[Theorem 1]{goodfellow2014generative}. The idea is that given a data set (e.g. a set of photos of cats), we want to train a model such that it can generate new data (new photos of cats) that is similar to the given data set.\\
+The GAN framework contains two neural networks, generator $G$ and discriminator $D$, with parameters $\theta^G, \theta^D$ respectively. We denote the true data distribution by $p_x$, and define a prior noise distribution to be $p_z$. The discriminator's goal is to discriminate whether the input comes from true data or noise data while the generator on the contrary aims to cheat the discriminator with its generated data similar to the true ones. In other words, the generator $G$ will transform $z \sim p_z$ to $G(z, \theta^G) \sim p_g$, where $p_g$ is the generated distribution. We expect $p_g = p_x$ by finding the global optimality of the two-player minimax game: $$\min _{\theta^G} \max _{\theta^D} V(\theta^D, \theta^G)=\mathbb{E}_{x \sim p_{x}}[\log D(x)]+\mathbb{E}_{z \sim p_{z}}[\log (1-D(G(z)))].$$
+In the next section, we will introduce a mean field control formulation of GAN. Before that, in the rest of this section, we recall how the optimization of a single neural network can be phrased as a mean field control problem.
+
+\section{From Residual Neural Networks to Optimal Control}
+\label{resNet}
+In this section, we follow the formulation of Weinan E et al. \cite{weinan2018mean}, and present the optimal control formulation for residual neural networks. Note that the following formulation requires labelled data, which is slightly different from the unsupervised GAN this thesis focuses on, we will address the difference in the next chapter.\\
+We assume the data is drawn from a joint probability distribution $(x_0,y_0) \sim  \mu$, where $x_0 \in \R^d , y_0 \in \R^l$. For a $N_T$ layered resNet, we have the feed-forward propagation difference equation: 
+$$ x_{t+1} = x_{t} + f(x_t,\theta_t), \quad t = 0,1,2,...,N_T-1$$
+where $\theta_t \in \Theta \subset \R^m$ is the control from the control set $\Theta$ and $f: \R^d \times \R^m \mapsto \R^d$ is the controlled feed-forward rule. To study it in the context of optimal control theory, we adopt a continuous-time idealization, which changes the above difference equation to a differential equation:$$ \dot x_{t} =f(x_t,\theta_t), \quad t \in [0,T] $$
+Then, $x_T$ is the output of this algorithm and with the terminal loss function $\Phi : \R^d \times \R^l \mapsto \R$, the running cost function (regularizer) $L:\R^d \times \Theta \mapsto \R$. By training the parameters (controls) $\bm{\theta} = \{\theta_t\}_{t = 0}^{t = T}$, we want to minimize the following loss :
+$$J(\bm{\theta}) = \Phi (x_T,y_0)+ \int_{0}^{T} L(x_t, \theta_t) \,dt, \; \bm{\theta} \in L^{\infty}([0,T],\Theta) $$
+Let us remind that $(x_0,y_0)$ comes from a probability distribution, which adds a mean field layer to the original optimal control problem. Hence, the deep learning problem to minimize the population risk can be structured as to minimize the expectation loss:\begin{equation}
+    \label{eq:1}
+    J(\bm{\theta}) = \mathbb{E}_{(x_0,y_0) \sim \mu}\left[\Phi (x_T,y_0)+ \int_{0}^{T} L(x_t, \theta_t)\, dt\right], \; \bm{\theta} \in L^{\infty}([0,T],\Theta)
+\end{equation} Note that the mean field emphasizes that the control itself is deterministic and only depends on the distribution instead of some individual data from the distribution. Also, $\theta_t$ is an open-loop control which means that it only depends on $t$ instead of a feedback control that depends on both $t$ and $x_t$. In other words, the parameters in each layer are fixed numbers.
+
+\section{Optimal Control Theory}
+In order to solve for the above optimal control problem and hence, develop a valid model, we need theorems that construct and characterize the control $\bm{\Theta}$. In this section, we will first introduce the Pontryagin Maximum Principle (PMP) and Hamilton–Jacobi–Bellman (HJB) equation in the classical optimal control theory \cite{bensoussan2013mean}. Then, we will state their mean field form in the above resNet case.
+\subsection{Classical Optimal Control Theory}
+In this subsection, we study the most generic case in the optimal control theory. In specific, it is a fixed time, free end point problem:
+\newtheorem{problem}{Problem}
+\label{problem_1}
+\begin{problem}
+Given $A \subset \R^m$ and $f: \R^n \times A \mapsto \R^n, x^0 \in \R^n$. We denote the set of admissible controls by $$\mathcal{A} = \{ \alpha(\cdot):[0,\infty) \mapsto A\; |\; \alpha(\cdot) \text{ is measurable}\}.$$
+Then, given $\alpha (\cdot)$ we can solve for the evolution of x controlled by:$$
+\begin{cases}
+\dot x(t) = f(x(t),\alpha(t))\; (t\geq0)\\
+x(t) = x^0
+\end{cases}$$
+We also have the payoff functional $$P[\alpha (\cdot)] = \int_{0}^{T} L(x(t),\alpha(t))dt+\Phi(x(T)),$$
+where $T>0$ is the terminal time, $L: \R^n \times A \mapsto \R$ is the given running payoff, $\Phi:\R^n \mapsto \R$ is the given terminal payoff.
+The problem is to find a control $\alpha^*(\cdot)$, such that $$P[\alpha^*(\cdot)] = \min _{\alpha(\cdot) \in \mathcal{A}} P[\alpha(\cdot)]$$
+\end{problem}
+\begin{definition}
+The control theory Hamiltonian is the function $$H(x,p,a) := f(x,a) \cdot p +L(x,a) \; \; \; x,p\in \R^n, a \in A$$
+\end{definition}
+\begin{theorem}[Pontryagin Maximum Principle]
+Assume $\alpha^*(\cdot)$ is optimal for \textbf{Problem 1}, and $x^*(\cdot)$ is the corresponding trajectory. Then there exists a function $p^*(\cdot): [0,T] \mapsto \R^n$ such that $$\begin{aligned}
+\dot x^*(t) &= \nabla_p H(x^*(t), p^*(t), \alpha^*(t)) = f(x^*(t), \alpha^*(t)),\\
+\dot p^*(t) &= -\nabla_x H(x^*(t), p^*(t), \alpha^*(t)),\\
+x^*(0) & = x^0\\
+p^*(T) &= \nabla \Phi(x^*(T)),\\
+H(x^*(t), p^*(t), \alpha^*(t)) &= \min _{a \in A} H(x^*(t), p^*(t), a), \; \; \forall 0 \leq t \leq T\\
+\end{aligned}
+$$
+In addition, the mapping $$t \mapsto H(x^*(t), p^*(t), \alpha^*(t)) \text{ is constant}$$
+\end{theorem}
+The general form of the theorem is proved in the book by Fleming and Rishel \cite{fleming2012deterministic}. Note that the maximum principle provides a rule to design the optimal control backwards by solving the costate $p^*(t)$ at the same time. However, the computation depends on a certain trajectory of $x$ and hence it is a local solution. In other words, when we start with a different initial value $x^0$, we will have to do the computation all over again to find the optimal control specific to this initial value. It motivates us to study the value function to solve the problem globally. Although the value function is often not explicit, the following HJB equation gives a good characterization of it.
+\begin{definition}
+For $x \in \R^n, 0 \leq t \leq T$, define the value function $v(x,t)$ to be the smallest payoff possible if we start at $x \in \R^n$, at time $t$. In other words,
+$$ v(x,t) := \inf _{\alpha(\cdot) \in \mathcal{A}} P[\alpha(\cdot)]$$
+\end{definition}
+\begin{theorem}[Hamiltonian-Jacobi-Bellman Equation]
+Assume that the value function $v$ is a $C^1$ function of the variables $(x,t)$. Then v solves the nonlinear partial differential equation, 
+$$v_{t}(x, t)+\min _{a \in A}\left\{f(x, a) \cdot \nabla_{x} v(x, t)+L(x, a)\right\}=0 \quad\left(x \in \mathbb{R}^{n}, 0 \leq t<T\right)$$
+with the terminal condition 
+$$v(x,T) = \Phi(x)$$
+\end{theorem}
+
+\subsection{Mean Field Optimal Control Theory}
+In this subsection, we introduce a stochastic feature to the above model and hence derive the PMP and HJB in the problem of training the resNet with the equation \eqref{eq:1}. Namely, we will find the optimal control not for a single input value but for a value comes from a certain distribution. Paper by Weinan E et al. \cite{weinan2018mean} has a complete proof on the following two theorems.
+\begin{theorem}[Mean Field PMP]
+Assume the function $f$ is bounded; $f, L$ are continuous in $\theta$; and $f, L, \Phi$ are continuously differentiable with respect to x. Assume the distribution $\mu$ has bounded support in $\R^d \times \R^l$. If $\boldsymbol{\theta}^{*} \in L^{\infty}([0, T], \Theta)$ is a solution of \textbf{Problem 1}, then there exists absolutely continuous stochastic processes $x^*, p^*$ such that
+$$
+\begin{array}{ll}
+\dot{x}_{t}^{*}=f\left(x_{t}^{*}, \theta_{t}^{*}\right), & x_{t}^{*}=x_{0} \\
+\dot{p}_{t}^{*}=-\nabla_{x} H\left(x_{t}^{*}, p_{t}^{*}, \theta_{t}^{*}\right), & p_{T}^{*}=\nabla_{x} \Phi\left(x_{T}^{*}, y_{0}\right) \\
+\mathbb{E}_{\mu} H\left(x_{t}^{*}, p_{t}^{*}, \theta_{t}^{*}\right)=\min _{\theta \in \Theta} \mathbb{E}_{\mu} H\left(x_{t}^{*}, p_{t}^{*}, \theta\right), & \text { a.e. } t \in[0, T]
+\end{array}
+$$
+where the Hamiltonian function $H: \mathbb{R}^{d} \times \mathbb{R}^{d} \times \Theta \rightarrow \mathbb{R}$ is given by $$H(x, p, \theta)= f(x, \theta) \cdot p +L(x, \theta)$$
+\end{theorem}
+
+\begin{definition}
+$$v^{*}(t, \mu)=\inf _{\boldsymbol{\theta} \in L^{\infty}([0, T], \Theta)} J(t, \mu, \boldsymbol{\theta})$$
+\end{definition}
+\begin{definition}
+Let $\bar{f},\bar{L},\bar{\Phi} $ be functions that extend to the $\R^{d+l}$ space defined by: $$\begin{aligned}
+    \bar{f}(w, \theta) &= (f(x,\theta),y)   \\
+    \bar{L}(w, \theta) &= L(x,\theta) \\
+    \bar{\Phi}(w) &= \Phi(x,y) \\
+\end{aligned}
+\quad \text{ for }  w = (x,y) \in \R^{d+l}$$
+\end{definition}
+
+\begin{theorem}[Mean Field HJB]
+Let $v$ be the solution to $$ \begin{cases}
+\frac{\partial v(t, \mu)}{\partial t}+\inf _{\theta_{t} \in \Theta}\int_{\R^{d+l}} (\partial_{\mu} v(t, \mu)(w) \cdot \bar{f}\left(w, \theta_{t}\right)+\bar{L}\left(w, \theta_{t}\right))\mu (dw)=0
+& \text { on }[0, T) \times \mathcal{P}_{2}\left(\mathbb{R}^{d+l}\right) \\ v(T, \mu)=\int_{\R^{d+l}} \bar{\Phi}(w)\mu(dw) = \mathbb{E}_{(x,y) \sim \mu} [\Phi(x,y)]\end{cases}$$
+and there exists $\theta^*: (t,\mu) \mapsto \theta$, attaining the infimum, then $v(t, \mu) = v^*(t, \mu)$, and $\theta^*$ is the optimal feedback control.
+\end{theorem}
+Note that the above two theorems is analogous to the ones in the optimal control theory but the only change is that we evaluate the cost function in the sense of expectation over a distribution and try to minimize the expected cost.
+
+
+
+
+
+
+
+
